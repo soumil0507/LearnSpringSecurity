@@ -15,8 +15,8 @@ import org.springframework.security.web.authentication.password.HaveIBeenPwnedRe
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
-@Profile("!prod")
-public class ProjectSecurityConfig {
+@Profile("prod")
+public class ProjectSecurityProdConfig {
 
     @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -28,23 +28,28 @@ public class ProjectSecurityConfig {
 //        http.authorizeHttpRequests((requests) -> requests.anyRequest().permitAll());
 
 //        request matchers to specify paths to blocks
-        http.sessionManagement(smc -> smc.invalidSessionUrl("/invalidSession").maximumSessions(3).maxSessionsPreventsLogin(true).expiredUrl("/expiredSession"))
-                .requiresChannel(rcc -> rcc.anyRequest().requiresInsecure()) // Only HTTP connection
+        http.sessionManagement(smc -> smc.invalidSessionUrl("/invalidSession").maximumSessions(1).maxSessionsPreventsLogin(true).expiredUrl("/expiredSession"))
+                .requiresChannel(rcc -> rcc.anyRequest().requiresSecure()) //Only HTTPS connection
                 .csrf(csrfConfig -> csrfConfig.disable())
                 .authorizeHttpRequests((requests) -> requests
                 .requestMatchers("/myAccount", "/myBalance", "/myLoans", "/myCards").authenticated()
-                .requestMatchers("/notices", "/contact", "/error", "/register", "/invalidSession","/expiredSession",
-                        "/login/**").permitAll());
+                .requestMatchers("/notices", "/contact", "/error", "/register", "/invalidSession").permitAll());
 
         http.formLogin(withDefaults());
-//        http.formLogin(flc -> flc.loginPage("/login").usernameParameter("userId").passwordParameter("secretPwd").defaultSuccessUrl("/dashboard"));
+
 //        disable the formLogin
 //        http.formLogin(formLoginConfig -> formLoginConfig.disable());
 
+//        http.httpBasic(withDefaults());
+
+//        invoking our custom basicAuthenticationEntryPoint
+
+//        hbc -> httpBasicConfig
         http.httpBasic(hbc -> hbc.authenticationEntryPoint(new CustomBasicAuthenticationEntryPoint()));
 
 //        making the authentication entry point global config
 //        http.exceptionHandling(ehc -> ehc.authenticationEntryPoint(new CustomBasicAuthenticationEntryPoint())); //IT IS A GLOBAL CONFIG
+
 
 //        CONFIGURING ACCESS DENIED HANDLER EXCEPTION AT GLOBAL LEVEL
         http.exceptionHandling(ehc -> ehc.accessDeniedHandler(new CustomAccessDeniedHandler()));
@@ -93,3 +98,4 @@ public class ProjectSecurityConfig {
 //    }
 
 }
+
